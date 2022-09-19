@@ -1,0 +1,11 @@
+#!/bin/bash
+
+volume=$(amixer get Master | grep -Po '\d{1,3}%' | head -n 1)
+
+check=$(amixer get Master | grep -Po '\[on\]')
+
+if [[ -n "$check" ]]; then
+    echo "^c#96CDFF^^d^ $volume" 
+else
+    echo "^c#DF2935^^d^ 0%" 
+fi
