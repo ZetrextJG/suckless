@@ -43,9 +43,9 @@ static const char *tags[] = {
 	"", /* Internet */
 	"", /* Terminal */
 	"", /* Code */
-	"ﭮ", /* Discord */
+	"ﴬ", /* Discord */
 	"", /* Spotify */
-	"6", /* Other */
+	"ﭮ", /* Discord */
 	"7"  /* Other */
 };
 
@@ -65,11 +65,15 @@ static int nmaster     = 1;    /* number of clients in master area */
 static int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
 
+#include "layouts.c"
 static const Layout layouts[] = {
 	/* symbol     arrange function */
 	{ "[]=",      tile },    /* first entry is default */
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
+	{ "HHH",      grid },
+	{ "|M|",      tcl },
+	{ ">M>",      centeredfloatingmaster },
 };
 
 /* key definitions */
@@ -110,64 +114,67 @@ ResourcePref resources[] = {
 		{ "selbgcolor",         STRING,  &selbgcolor },
 		{ "selbordercolor",     STRING,  &selbordercolor },
 		{ "selfgcolor",         STRING,  &selfgcolor },
-		{ "snap",          	INTEGER, &snap },
+		{ "snap",          	    INTEGER, &snap },
 		{ "showbar",          	INTEGER, &showbar },
 		{ "topbar",          	INTEGER, &topbar },
 		{ "nmaster",          	INTEGER, &nmaster },
 		{ "resizehints",       	INTEGER, &resizehints },
-		{ "mfact",      	FLOAT,   &mfact },
+		{ "mfact",      	    FLOAT,   &mfact },
 		{ "highpriority",      	STRING,  &highpriority },
 };
 
 static Key keys[] = {
-	/* modifier                     key		   function        argument */
-	{ MODKEY,                       XK_p,		   spawn,          {.v = dmenucmd } },
-	{ MODKEY|ShiftMask,             XK_Return,	   spawn,          {.v = termcmd } },
-	{ MODKEY,                       XK_b,		   togglebar,      {0} },
-	{ MODKEY,                       XK_v,		   togglebarpos,   {0} },
-	{ MODKEY,                       XK_j,		   focusstack,     {.i = +1 } },
-	{ MODKEY,                       XK_k,		   focusstack,     {.i = -1 } },
-	{ MODKEY,                       XK_i,		   incnmaster,     {.i = +1 } },
-	{ MODKEY,                       XK_d,		   incnmaster,     {.i = -1 } },
-	{ MODKEY,                       XK_h,		   setmfact,       {.f = -0.05} },
-	{ MODKEY,                       XK_l,		   setmfact,       {.f = +0.05} },
-	{ MODKEY,                       XK_Return,	   zoom,           {0} },
-	{ MODKEY,                       XK_Tab,		   view,           {0} },
-	{ MODKEY|ShiftMask,             XK_c,		   killclient,     {0} },
-	{ MODKEY,                       XK_t,		   setlayout,      {.v = &layouts[0]} },
-	{ MODKEY,                       XK_f,		   setlayout,      {.v = &layouts[1]} },
-	{ MODKEY,                       XK_m,		   setlayout,      {.v = &layouts[2]} },
-	{ MODKEY,                       XK_space,	   setlayout,      {0} },
-	{ MODKEY|ShiftMask,             XK_space,	   togglefloating, {0} },
-	{ MODKEY,             		XK_n,      	   togglefullscr,  {0} },
-	{ MODKEY,                       XK_0,		   view,           {.ui = ~0 } },
-	{ MODKEY|ShiftMask,             XK_0,		   tag,            {.ui = ~0 } },
-	{ MODKEY,                       XK_comma,	   focusmon,       {.i = -1 } },
-	{ MODKEY,                       XK_period,	   focusmon,       {.i = +1 } },
-	{ MODKEY|ShiftMask,             XK_comma,	   tagmon,         {.i = -1 } },
-	{ MODKEY|ShiftMask,             XK_period,	   tagmon,         {.i = +1 } },
+	/* modifier             key		            function        argument */
+	{ MODKEY,               XK_p,		  		spawn,          {.v = dmenucmd } },
+	{ MODKEY|ShiftMask,     XK_Return,	  		spawn,          {.v = termcmd } },
+	{ MODKEY,               XK_b,		  		togglebar,      {0} },
+	{ MODKEY,               XK_v,		  		togglebarpos,   {0} },
+	{ MODKEY,               XK_j,		  		focusstack,     {.i = +1 } },
+	{ MODKEY,               XK_k,		  		focusstack,     {.i = -1 } },
+	{ MODKEY,               XK_i,		  		incnmaster,     {.i = +1 } },
+	{ MODKEY,               XK_d,		  		incnmaster,     {.i = -1 } },
+	{ MODKEY,               XK_h,		  		setmfact,       {.f = -0.05} },
+	{ MODKEY,               XK_l,		  		setmfact,       {.f = +0.05} },
+	{ MODKEY,               XK_Return,	  		zoom,           {0} },
+	{ MODKEY,               XK_Tab,		  		view,           {0} },
+	{ MODKEY|ShiftMask,     XK_c,		  		killclient,     {0} },
+	{ MODKEY,               XK_t,		  		setlayout,      {.v = &layouts[0]} },
+	{ MODKEY,               XK_f,		  		setlayout,      {.v = &layouts[1]} },
+	{ MODKEY,               XK_m,		  		setlayout,      {.v = &layouts[2]} },
+	{ MODKEY,               XK_g,         		setlayout,      {.v = &layouts[3]} },
+	{ MODKEY,               XK_y,         		setlayout,      {.v = &layouts[4]} },
+    { MODKEY,               XK_u,               setlayout,      {.v = &layouts[5]} },
+	{ MODKEY,               XK_space,	  		setlayout,      {0} },
+	{ MODKEY|ShiftMask,     XK_space,	  		togglefloating, {0} },
+	{ MODKEY,             	XK_n,      	  		togglefullscr,  {0} },
+	{ MODKEY,               XK_0,		  		view,           {.ui = ~0 } },
+	{ MODKEY|ShiftMask,     XK_0,		  		tag,            {.ui = ~0 } },
+	{ MODKEY,               XK_comma,	  		focusmon,       {.i = -1 } },
+	{ MODKEY,               XK_period,	  		focusmon,       {.i = +1 } },
+	{ MODKEY|ShiftMask,     XK_comma,	  		tagmon,         {.i = -1 } },
+	{ MODKEY|ShiftMask,     XK_period,	  		tagmon,         {.i = +1 } },
 	/* Custom keybinds */
-	{ MODKEY,                       XK_minus,	   setgaps,        {.i = -5 } },
-	{ MODKEY,                       XK_equal,	   setgaps,        {.i = +5 } },
-	{ MODKEY,             		XK_backslash,  	   setgaps,        {.i = GAP_RESET } },
-	{ MODKEY|ShiftMask,             XK_backslash,  	   setgaps,        {.i = GAP_TOGGLE } },
-	{ MODKEY,                       XK_bracketleft,	   setborderpx,    {.i = -1 } },
-	{ MODKEY,                       XK_bracketright,   setborderpx,    {.i = +1 } },
-	{ MODKEY|ShiftMask,             XK_s,   	   spawn,          {.v = takess } },
-	{ MODKEY|ShiftMask,             XK_g,   	   spawn,          {.v = cpicker } },
-	{ MODKEY|ShiftMask,             XK_p,   	   spawn,          {.v = powermen } },
-	{ MODKEY|ShiftMask,             XK_b,   	   spawn,          {.v = bluemen } },
-	{ MODKEY|ShiftMask,             XK_a,   	   spawn,          {.v = quickapps } },
+	{ MODKEY,               XK_minus,	        setgaps,        {.i = -5 } },
+	{ MODKEY,               XK_equal,	        setgaps,        {.i = +5 } },
+	{ MODKEY,             	XK_backslash,  	    setgaps,        {.i = GAP_RESET } },
+	{ MODKEY|ShiftMask,     XK_backslash,  	    setgaps,        {.i = GAP_TOGGLE } },
+	{ MODKEY,               XK_bracketleft,	    setborderpx,    {.i = -1 } },
+	{ MODKEY,               XK_bracketright,    setborderpx,    {.i = +1 } },
+	{ MODKEY|ShiftMask,     XK_s,   	        spawn,          {.v = takess } },
+	{ MODKEY|ShiftMask,     XK_g,   	        spawn,          {.v = cpicker } },
+	{ MODKEY|ShiftMask,     XK_p,   	        spawn,          {.v = powermen } },
+	{ MODKEY|ShiftMask,     XK_b,   	        spawn,          {.v = bluemen } },
+	{ MODKEY|ShiftMask,     XK_a,   	        spawn,          {.v = quickapps } },
 	/* Special keys keybinds */
-	{ 0,             XF86XK_MonBrightnessUp,  	spawn,          {.v = brightup } },
-	{ 0,             XF86XK_MonBrightnessDown,    	spawn,          {.v = brightdown } },
-	{ 0,             XF86XK_AudioLowerVolume,     	spawn,          {.v = sounddown } },
-	{ 0,             XF86XK_AudioMute,     	   	spawn,          {.v = soundtgl } },
-	{ 0,             XF86XK_AudioRaiseVolume,     	spawn,          {.v = soundup } },
-	{ 0,             XF86XK_AudioPlay,            	spawn,          {.v = musicpause } },
-	{ 0,             XF86XK_AudioStop,     	   	spawn,          {.v = musicpause } },
-	{ 0,             XF86XK_AudioPrev,     	   	spawn,          {.v = musicprev } },
-	{ 0,             XF86XK_AudioNext,     	   	spawn,          {.v = musicnext } },
+	{ 0,       XF86XK_MonBrightnessUp,  	    spawn,          {.v = brightup } },
+	{ 0,       XF86XK_MonBrightnessDown,        spawn,          {.v = brightdown } },
+	{ 0,       XF86XK_AudioLowerVolume,         spawn,          {.v = sounddown } },
+	{ 0,       XF86XK_AudioMute,     	   	    spawn,          {.v = soundtgl } },
+	{ 0,       XF86XK_AudioRaiseVolume,         spawn,          {.v = soundup } },
+	{ 0,       XF86XK_AudioPlay,                spawn,          {.v = musicpause } },
+	{ 0,       XF86XK_AudioStop,     	   	    spawn,          {.v = musicpause } },
+	{ 0,       XF86XK_AudioPrev,     	   	    spawn,          {.v = musicprev } },
+	{ 0,       XF86XK_AudioNext,     	   	    spawn,          {.v = musicnext } },
 
 	/* Tag keys and else */
 	TAGKEYS(                        XK_1,				   0)

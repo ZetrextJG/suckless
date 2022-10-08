@@ -11,8 +11,7 @@
  * in O(1) time.
  *
  * Each child of the root window is called a client, except windows which have
- * set the override_redirect flag. Clients are organized in a linked client
- * list on each monitor, the focus history is remembered through a stack list
+ * set the override_redirect flag. Clients are organized in a linked client list on each monitor, the focus history is remembered through a stack list
  * on each monitor. Each client contains a bit array to indicate the tags of a
  * client.
  *
@@ -266,7 +265,6 @@ static void spawn(const Arg *arg);
 static Monitor *systraytomon(Monitor *m);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
-static void tile(Monitor *m);
 static void togglebar(const Arg *arg);
 static void togglebarpos(const Arg *arg);
 static void togglefloating(const Arg *arg);
@@ -1241,7 +1239,16 @@ grabkeys(void)
 void
 incnmaster(const Arg *arg)
 {
-	selmon->nmaster = MAX(selmon->nmaster + arg->i, 0);
+	unsigned int n;
+    int upb;
+	Client *c;
+
+	for (n = 0, c = nexttiled(selmon->clients); c; c = nexttiled(c->next), n++);
+	if (n == 0)
+		return;
+
+    upb = MIN(selmon->nmaster + arg->i, n);
+	selmon->nmaster = MAX(upb, 0);
 	arrange(selmon);
 }
 
@@ -1381,20 +1388,6 @@ maprequest(XEvent *e)
 		manage(ev->window, &wa);
 }
 
-void
-monocle(Monitor *m)
-{
-	unsigned int n = 0;
-	Client *c;
-
-	for (c = m->clients; c; c = c->next)
-		if (ISVISIBLE(c))
-			n++;
-	if (n > 0) /* override layout symbol */
-		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
-	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
-		resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
-}
 
 void
 motionnotify(XEvent *e)
@@ -2077,34 +2070,6 @@ tagmon(const Arg *arg)
 	if (!selmon->sel || !mons->next)
 		return;
 	sendmon(selmon->sel, dirtomon(arg->i));
-}
-
-void
-tile(Monitor *m)
-{
-	unsigned int i, n, h, mw, my, ty;
-	Client *c;
-
-	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
-	if (n == 0)
-		return;
-
-	if (n > m->nmaster)
-		mw = m->nmaster ? m->ww * m->mfact : 0;
-	else
-		mw = m->ww - m->gap->gappx;
-	for (i = 0, my = ty = m->gap->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
-		if (i < m->nmaster) {
-			h = (m->wh - my) / (MIN(n, m->nmaster) - i) - m->gap->gappx;
-			resize(c, m->wx + m->gap->gappx, m->wy + my, mw - (2*c->bw) - m->gap->gappx, h - (2*c->bw), 0);
-			if (my + HEIGHT(c) + m->gap->gappx < m->wh)
-				my += HEIGHT(c) + m->gap->gappx;
-		} else {
-			h = (m->wh - ty) / (n - i) - m->gap->gappx;
-			resize(c, m->wx + mw + m->gap->gappx, m->wy + ty, m->ww - mw - (2*c->bw) - 2*m->gap->gappx, h - (2*c->bw), 0);
-			if (ty + HEIGHT(c) + m->gap->gappx < m->wh)
-				ty += HEIGHT(c) + m->gap->gappx;
-		}
 }
 
 void
