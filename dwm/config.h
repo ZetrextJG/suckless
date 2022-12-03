@@ -43,7 +43,6 @@ static const char *tags[] = {
 	"", /* Internet */
 	"", /* Terminal */
 	"", /* Code */
-	"ﴬ", /* Discord */
 	"", /* Spotify */
 	"ﭮ", /* Discord */
 	"7"  /* Other */
@@ -54,9 +53,12 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      instance    title       tags mask     isfloating   monitor */
-	{ "Gimp",     NULL,       NULL,       0,            1,           -1 },
-	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1 },
+	/* class        instance    title       tags mask     isfloating   monitor    scratch key */
+	{ "Gimp",       NULL,       NULL,       0,            1,           -1,        0  },
+	{ "firefox",    NULL,       NULL,       1 << 8,       0,           -1,        0  },
+	{ "mathsnip",   NULL,       NULL,       0,            1,           -1,        0  },
+	{ "Spotify",    NULL,       NULL,       0,            1,           -1,       's' },
+	{ "obsidian",   "obsidian", NULL,       0,            1,           -1,       'o' },
 };
 
 /* layout(s) */
@@ -88,6 +90,7 @@ static const Layout layouts[] = {
 #define SHCMD(cmd) { .v = (const char*[]){ "/usr/bin/alacritty", "-c", cmd, NULL } } /* commands */ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static char dmenumon[2] = "0";
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", normbgcolor, "-nf", normfgcolor, "-sb", selbgcolor, "-sf", selfgcolor, "-hp", highpriority, NULL };
+
 static const char *termcmd[]  = { "alacritty", NULL };
 static const char *takess[]  = { "flameshot", "gui", NULL };
 static const char *cpicker[]  = { "cpicker", NULL };
@@ -123,6 +126,10 @@ ResourcePref resources[] = {
 		{ "highpriority",      	STRING,  &highpriority },
 };
 
+/*First arg only serves to match against key in rules*/
+static const char *scratchspoti[] = {"s", "spotify", NULL}; 
+static const char *scratchobsid[] = {"o", "obsidian", NULL}; 
+
 static Key keys[] = {
 	/* modifier             key		            function        argument */
 	{ MODKEY,               XK_p,		  		spawn,          {.v = dmenucmd } },
@@ -154,6 +161,8 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,     XK_comma,	  		tagmon,         {.i = -1 } },
 	{ MODKEY|ShiftMask,     XK_period,	  		tagmon,         {.i = +1 } },
 	/* Custom keybinds */
+    { MODKEY,               XK_r,               togglescratch,  {.v = scratchspoti } },
+    { MODKEY,               XK_o,               togglescratch,  {.v = scratchobsid } },
 	{ MODKEY,               XK_minus,	        setgaps,        {.i = -5 } },
 	{ MODKEY,               XK_equal,	        setgaps,        {.i = +5 } },
 	{ MODKEY,             	XK_backslash,  	    setgaps,        {.i = GAP_RESET } },

@@ -113,6 +113,7 @@ struct Client {
 	int bw, oldbw;
 	unsigned int tags;
 	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
+	char scratchkey;
 	Client *next;
 	Client *snext;
 	Monitor *mon;
@@ -167,6 +168,7 @@ typedef struct {
 	unsigned int tags;
 	int isfloating;
 	int monitor;
+	const char scratchkey;
 } Rule;
 
 /* Xresources preferences */
@@ -262,12 +264,14 @@ static void seturgent(Client *c, int urg);
 static void showhide(Client *c);
 static void sigchld(int unused);
 static void spawn(const Arg *arg);
+static void spawnscratch(const Arg *arg);
 static Monitor *systraytomon(Monitor *m);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
 static void togglebar(const Arg *arg);
 static void togglebarpos(const Arg *arg);
 static void togglefloating(const Arg *arg);
+static void togglescratch(const Arg *arg);
 static void togglefullscr(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
@@ -300,6 +304,7 @@ static void load_xresources(void);
 static void resource_load(XrmDatabase db, char *name, enum resource_type rtype, void *dst);
 
 /* variables */
+static FILE *log = NULL;
 static Systray *systray = NULL;
 static Client *wintosystrayicon(Window w);
 static const char broken[] = "broken";
@@ -360,18 +365,31 @@ applyrules(Client *c)
 	/* rule matching */
 	c->isfloating = 0;
 	c->tags = 0;
+	c->scratchkey = 0;
+    fprintf(stderr, "I am not home\n");
+    fprintf(stderr, "Client name: %s\n", c->name);
+    fprintf(stderr, "Client sk: %c\n", c->scratchkey);
 	XGetClassHint(dpy, c->win, &ch);
 	class    = ch.res_class ? ch.res_class : broken;
 	instance = ch.res_name  ? ch.res_name  : broken;
 
+    fprintf(stderr, "Client class: %s\n", class);
+    fprintf(stderr, "Client instance: %s\n", instance);
+
 	for (i = 0; i < LENGTH(rules); i++) {
 		r = &rules[i];
+        fprintf(stderr, "Rule affecting: %s\n", r->title);
 		if ((!r->title || strstr(c->name, r->title))
 		&& (!r->class || strstr(class, r->class))
 		&& (!r->instance || strstr(instance, r->instance)))
 		{
+            fprintf(stderr, "I am home\n");
+            fprintf(stderr, "Client name: %s\n", c->name);
+            fprintf(stderr, "Client sk: %c\n", c->scratchkey);
+            fprintf(stderr, "Rule sk: %c\n", r->scratchkey);
 			c->isfloating = r->isfloating;
 			c->tags |= r->tags;
+			c->scratchkey = r->scratchkey;
 			for (m = mons; m && m->num != r->monitor; m = m->next);
 			if (m)
 				c->mon = m;
@@ -381,6 +399,7 @@ applyrules(Client *c)
 		XFree(ch.res_class);
 	if (ch.res_name)
 		XFree(ch.res_name);
+
 	c->tags = c->tags & TAGMASK ? c->tags & TAGMASK : c->mon->tagset[c->mon->seltags];
 }
 
@@ -2054,6 +2073,21 @@ spawn(const Arg *arg)
 	}
 }
 
+void spawnscratch(const Arg *arg)
+{
+
+    fprintf(stderr, "Spawn...%d\n", 0);
+	if (fork() == 0) {
+		if (dpy)
+			close(ConnectionNumber(dpy));
+		setsid();
+		execvp(((char **)arg->v)[1], ((char **)arg->v)+1);
+		fprintf(stderr, "dwm: execvp %s", ((char **)arg->v)[1]);
+		perror(" failed");
+		exit(EXIT_SUCCESS);
+	}
+}
+
 void
 tag(const Arg *arg)
 {
@@ -2119,6 +2153,38 @@ togglefullscr(const Arg *arg)
 {
   if(selmon->sel)
     setfullscreen(selmon->sel, !selmon->sel->isfullscreen);
+}
+
+void
+togglescratch(const Arg *arg)
+{
+    fprintf(stderr, "ToggleScratch %d\n", 1);
+	Client *c;
+	unsigned int found = 0;
+    fprintf(stderr, "Void char: %c\n", ((char**)arg->v)[0][0]);
+
+    
+	for (c = selmon->clients; c; c = c->next){
+        fprintf(stderr, "ClientName: %s", c->name);
+        fprintf(stderr, "Char 1: %c\n", c->scratchkey);
+    };
+
+	for (c = selmon->clients; c && !(found = c->scratchkey == ((char**)arg->v)[0][0]); c = c->next){
+        fprintf(stderr, "Char 2: %c\n", c->scratchkey);
+    };
+	if (found) {
+		c->tags = ISVISIBLE(c) ? 0 : selmon->tagset[selmon->seltags];
+		focus(NULL);
+		arrange(selmon);
+
+		if (ISVISIBLE(c)) {
+			focus(c);
+			restack(selmon);
+		}
+
+	} else{
+		spawnscratch(arg);
+	}
 }
 
 void
@@ -2541,6 +2607,7 @@ updatetitle(Client *c)
 {
 	if (!gettextprop(c->win, netatom[NetWMName], c->name, sizeof c->name))
 		gettextprop(c->win, XA_WM_NAME, c->name, sizeof c->name);
+
 	if (c->name[0] == '\0') /* hack to mark broken clients */
 		strcpy(c->name, broken);
 }
@@ -2786,6 +2853,9 @@ load_xresources(void)
 int
 main(int argc, char *argv[])
 {
+    /* Open log file */
+    if (!(log = fopen("/tmp/dwm.log", "a"))) { }
+
 	if (argc == 2 && !strcmp("-v", argv[1]))
 		die("dwm-"VERSION);
 	else if (argc != 1)
